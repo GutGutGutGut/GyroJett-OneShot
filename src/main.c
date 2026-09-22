@@ -12,6 +12,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "crypto.h"
+
 #define TOR_HOST "127.0.0.1"
 #define TOR_PORT 9050
 #define BUFFER_SIZE 65536
@@ -631,8 +633,13 @@ int main(int argc, char **argv)
 {
     if (argc < 2) {
         printf("Uso:\n");
-        printf("  %s server porta\n", argv[0]);
+        printf("  %s server porta Recomend:4242\n", argv[0]);
         printf("  %s connect endereco.onion porta\n", argv[0]);
+        return 1;
+    }
+
+    if (crypto_init() < 0) {
+        fprintf(stderr, "Erro ao inicializar GPGME.\n");
         return 1;
     }
 

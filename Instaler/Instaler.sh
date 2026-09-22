@@ -5,13 +5,15 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
 echo "Instalando dependências..."
-sudo apt install -y gcc binutils tor
+sudo apt install -y gcc binutils tor pkg-config libgpgme-dev gpg
 
 echo "[1/4] Compilando GyroJett-OneShot..."
 
 gcc -std=c17 -Wall -Wextra -O2 -pthread \
-    "$PROJECT_DIR/src/gyrojett1s.c" \
-    -o "$SCRIPT_DIR/GyroJett-OneShot"
+    "$PROJECT_DIR/src/main.c" \
+    "$PROJECT_DIR/src/crypto.c" \
+    $(pkg-config --cflags --libs gpgme) \
+    -o "$PROJECT_DIR/app/GyroJett-OneShot"
 
 echo "[2/4] Configurando Tor..."
 
@@ -29,7 +31,9 @@ sudo systemctl restart tor
 
 echo "[4/4] Instalando GyroJett-OneShot..."
 
-sudo install -m 755 "$SCRIPT_DIR/GyroJett-OneShot" /usr/local/bin/gyrojett-oneshot
+sudo install -m 755 \
+    "$PROJECT_DIR/app/GyroJett-OneShot" \
+    /usr/local/bin/gyrojett-oneshot
 
 echo
 echo "GyroJett instalado!"
