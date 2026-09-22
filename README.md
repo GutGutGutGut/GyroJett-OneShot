@@ -184,8 +184,8 @@ The project intentionally aims to keep the architecture small.
 │            Messaging Protocol             │
 │                                           │
 ├───────────────────────────────────────────┤
-│             Cryptographic Layer            │
-│                 GPG / OpenPGP              │
+│             Cryptographic Layer           │
+│                 GPG / OpenPGP             │
 │                                           │
 ├───────────────────────────────────────────┤
 │                Network Layer              │
