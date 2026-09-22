@@ -9,6 +9,8 @@ sudo apt install -y gcc binutils tor pkg-config libgpgme-dev gpg
 
 echo "[1/4] Compilando GyroJett-OneShot..."
 
+mkdir -p "$PROJECT_DIR/app/"
+
 gcc -std=c17 -Wall -Wextra -O2 -pthread \
     "$PROJECT_DIR/src/main.c" \
     "$PROJECT_DIR/src/crypto.c" \
