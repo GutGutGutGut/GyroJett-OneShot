@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/Gyrojett.png" width="420">
+  <img src="assets/GyroJett.png" width="420">
 </p>
 
 <h1 align="center">GyroJett OneShot</h1>
