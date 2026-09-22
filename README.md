@@ -121,13 +121,13 @@ cd GyroJett-Oneshot
 ### Build
 
 ```bash
-gcc src/gyrojett1s.c -o gyrojet
+chmod +x app/Instaler.sh
 ```
 
 ### Run
 
 ```bash
-./gyrojet
+gyrojet-oneshot
 ```
 
 ## Security
