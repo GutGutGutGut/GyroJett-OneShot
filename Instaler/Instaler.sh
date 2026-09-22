@@ -29,7 +29,7 @@ EOF'
 
 echo "[3/4] Reiniciando Tor..."
 
-sudo systemctl restart tor
+sudo systemctl restart tor@default.service
 
 echo "[4/4] Instalando GyroJett-OneShot..."
 
