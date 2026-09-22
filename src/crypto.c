@@ -11,7 +11,7 @@ int crypto_init(void)
     gpgme_check_version(NULL);
 
     if (gpgme_engine_check_version(GPGME_PROTOCOL_OpenPGP) != GPG_ERR_NO_ERROR) {
-        fprintf(stderr, "GPGME: engine OpenPGP indisponível\n");
+        fprintf(stderr, "GPGME: OpenPGP engine not available\n");
         return -1;
     }
 

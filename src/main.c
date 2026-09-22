@@ -30,7 +30,7 @@ typedef struct {
 } connection_t;
 
 /* --------------------------------------------------------- */
-/* Utilidades                                                 */
+/* Utilities                                                 */
 /* --------------------------------------------------------- */
 
 static int send_all(int sock, const void *data, size_t len)
@@ -86,7 +86,7 @@ static void print_progress(uint64_t current, uint64_t total)
 }
 
 /* --------------------------------------------------------- */
-/* Inteiros em formato de rede                               */
+/* Integers in network format                                */
 /* --------------------------------------------------------- */
 
 static uint64_t htonll(uint64_t value)
@@ -146,15 +146,15 @@ static int connect_tor(const char *host, uint16_t port)
         goto error;
 
     if (response[0] != 0x05 || response[1] != 0x00) {
-        fprintf(stderr, "Tor SOCKS5 recusou conexão.\n");
+        fprintf(stderr, "Tor SOCKS5 refused the connection.\n");
         goto error;
     }
 
-    /* Resolve o hostname como domínio pelo próprio Tor */
+    /* Tor itself resolves the hostname as a domain */
     size_t host_len = strlen(host);
 
     if (host_len > 255) {
-        fprintf(stderr, "Hostname muito grande.\n");
+        fprintf(stderr, "Hostname too long..\n");
         goto error;
     }
 
@@ -183,11 +183,11 @@ static int connect_tor(const char *host, uint16_t port)
         goto error;
 
     if (header[0] != 0x05 || header[1] != 0x00) {
-        fprintf(stderr, "Tor não conseguiu conectar ao destino.\n");
+        fprintf(stderr, "Tor failed to connect to the destination.\n");
         goto error;
     }
 
-    /* Consumir endereço retornado pelo SOCKS5 */
+    /* Consume the address returned by SOCKS5 */
     size_t addr_len;
 
     if (header[3] == 0x01)
@@ -217,7 +217,7 @@ static int connect_tor(const char *host, uint16_t port)
 
     free(addr_buf);
 
-    printf("Tor: conectado a %s:%u\n", host, port);
+    printf("Tor: connected to %s:%u\n", host, port);
 
     return sock;
 
@@ -227,7 +227,7 @@ error:
 }
 
 /* --------------------------------------------------------- */
-/* Envio de mensagem                                          */
+/* Sending message                                           */
 /* --------------------------------------------------------- */
 
 static int send_message(int sock, const char *msg)
@@ -249,7 +249,7 @@ static int send_message(int sock, const char *msg)
 }
 
 /* --------------------------------------------------------- */
-/* Envio de arquivo                                           */
+/* Sending file                                           */
 /* --------------------------------------------------------- */
 
 static int send_file(int sock, const char *path)
@@ -296,7 +296,7 @@ static int send_file(int sock, const char *path)
     char buffer[BUFFER_SIZE];
     uint64_t sent = 0;
 
-    printf("Enviando %s\n", filename);
+    printf("Sending %s\n", filename);
 
     while (sent < size) {
 
@@ -334,7 +334,7 @@ static int send_file(int sock, const char *path)
     if (send_all(sock, &end, 1) < 0)
         return -1;
 
-    printf("Arquivo enviado: %s (%llu bytes)\n",
+    printf("File sent: %s (%llu bytes)\n",
            filename,
            (unsigned long long)sent);
 
@@ -342,7 +342,7 @@ static int send_file(int sock, const char *path)
 }
 
 /* --------------------------------------------------------- */
-/* Recepção                                                    */
+/* reception                                                 */
 /* --------------------------------------------------------- */
 
 static void receive_message(int sock)
@@ -355,7 +355,7 @@ static void receive_message(int sock)
     uint32_t len = ntohl(net_len);
 
     if (len > 16 * 1024 * 1024) {
-        fprintf(stderr, "\nMensagem muito grande.\n");
+        fprintf(stderr, "\nMessage too long.\n");
         return;
     }
 
@@ -413,7 +413,7 @@ static void receive_file_begin(int sock)
         return;
     }
 
-    printf("\nRecebendo %s\n", incoming_name);
+    printf("\nReceiving %s\n", incoming_name);
 }
 
 static void receive_file_data(int sock)
@@ -452,7 +452,7 @@ static void receive_file_end(void)
         incoming_file = NULL;
     }
 
-    printf("\n< %s recebido (%llu bytes)\n",
+    printf("\n< %s received (%llu bytes)\n",
            incoming_name,
            (unsigned long long)incoming_received);
 
@@ -461,7 +461,7 @@ static void receive_file_end(void)
 }
 
 /* --------------------------------------------------------- */
-/* Thread de recepção                                         */
+/* Reception thread                                          */
 /* --------------------------------------------------------- */
 
 static void *receiver_thread(void *arg)
@@ -498,12 +498,12 @@ static void *receiver_thread(void *arg)
             break;
 
         case PKT_QUIT:
-            printf("\n< Peer desconectou.\n");
+            printf("\n< User disconnected.\n");
             conn->running = 0;
             break;
 
         default:
-            fprintf(stderr, "\nPacote desconhecido: %u\n", type);
+            fprintf(stderr, "\nUnknown package: %u\n", type);
             conn->running = 0;
             break;
         }
@@ -515,6 +515,26 @@ static void *receiver_thread(void *arg)
 /* --------------------------------------------------------- */
 /* Chat                                                       */
 /* --------------------------------------------------------- */
+
+static void print_onion_address(void)
+{
+    FILE *file = fopen("/var/lib/gyrojet-oneshot/hostname", "r");
+
+    if (!file) {
+        perror("Não foi possível ler o endereço Onion");
+        return;
+    }
+
+    char onion[256];
+
+    if (fgets(onion, sizeof(onion), file) != NULL) {
+        onion[strcspn(onion, "\n")] = '\0';
+
+        printf("Seu endereço Onion: %s\n", onion);
+    }
+
+    fclose(file);
+}
 
 static void chat(int sock)
 {
@@ -661,6 +681,8 @@ int main(int argc, char **argv)
 
         printf("GyroJett-OneShot server\n");
         printf("Escutando na porta %u...\n", port);
+
+        print_onion_address();
 
         struct sockaddr_in client;
         socklen_t client_len = sizeof(client);
