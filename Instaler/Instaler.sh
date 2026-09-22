@@ -10,7 +10,7 @@ sudo apt install -y gcc binutils tor
 echo "[1/4] Compilando GyroJett-OneShot..."
 
 gcc -std=c17 -Wall -Wextra -O2 -pthread \
-    "$PROJECT_DIR/src/gyrojet1s.c" \
+    "$PROJECT_DIR/src/gyrojett1s.c" \
     -o "$SCRIPT_DIR/GyroJett-OneShot"
 
 echo "[2/4] Configurando Tor..."
