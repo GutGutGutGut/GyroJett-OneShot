@@ -9,12 +9,13 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/license/GutGutGutGut/GyroJett-Oneshot">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg">
+  </a>
   <img src="https://img.shields.io/github/last-commit/GutGutGutGut/GyroJett-Oneshot">
   <img src="https://img.shields.io/github/repo-size/GutGutGutGut/GyroJett-Oneshot">
   <img src="https://img.shields.io/github/stars/GutGutGutGut/GyroJett-Oneshot">
 </p>
-
 ---
 
 ## About
