@@ -87,15 +87,15 @@ The project is experimental and its architecture may change significantly as dev
 * [x] Initial project
 * [x] Basic C implementation
 * [ ] Messaging protocol
-* [ ] Tor integration
+* [X] Tor integration
 * [ ] GPG identity system
 * [ ] End-to-end encryption
-* [ ] Message handling
+* [X] Message handling
 * [ ] Secure file transfer
 * [ ] Connection management
 * [ ] Better error handling
 * [ ] Security review
-* [ ] Documentation
+* [X] Documentation
 * [ ] Stable release
 
 ## Building
@@ -107,9 +107,11 @@ Currently, development is primarily targeted at Linux.
 Required tools:
 
 * GCC
-* Git
-* GnuPG
+* BinUtils
 * Tor
+* PKG-Config
+* libgpgme-dev
+* GPG
 
 ### Clone
 
@@ -127,7 +129,12 @@ chmod +x app/Instaler.sh
 ### Run
 
 ```bash
-gyrojet-oneshot
+./app/Instaler.sh
+
+gyrojet-oneshot server 4242
+Or
+gyrojet-oneshot connect ExempleExemple.onion 4242
+
 ```
 
 ## Security
@@ -199,16 +206,19 @@ The architecture is still evolving.
 ## Repository Structure
 
 ```text
+
 GyroJett-Oneshot/
-│
 ├── app/
+│   └── GyroJett-OneShot
+├── assets/
+├── Instaler/
 │   └── Instaler.sh
-│
 ├── src/
-│   └── gyrojet1s.c
-│
-├── README.md
-└── LICENSE
+│   ├── main.c
+│   ├── crypto.c
+│   └── crypto.h
+├── LICENSE
+└── README.md
 ```
 
 ## Contributing
