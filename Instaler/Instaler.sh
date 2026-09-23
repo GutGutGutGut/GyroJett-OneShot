@@ -4,127 +4,170 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
+echo "#####################################"
+echo "#    GyroJett-OneShot2 Installer    #"
+echo "#####################################"
+echo
+
 echo "Checking dependencies..."
+echo
 
 PACKAGES=(
-    gcc
-    binutils
-    tor
-    pkg-config
-    libgpgme-dev
-    gpg
+gcc
+binutils
+cmake
+ninja-build
+tor
 )
 
 MISSING=()
 
 for package in "${PACKAGES[@]}"; do
-    if dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q "install ok installed"; then
-        VERSION=$(dpkg-query -W -f='${Version}' "$package")
-        echo "  $package $VERSION [OK]"
-    else
-        echo "  $package [MISSING]"
-        MISSING+=("$package")
-    fi
+if dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q "install ok installed"; then
+VERSION=$(dpkg-query -W -f='${Version}' "$package")
+echo "  $package $VERSION [OK]"
+else
+echo "  $package [MISSING]"
+MISSING+=("$package")
+fi
 done
 
 echo
 
-if [ ${#MISSING[@]} -gt 0 ]; then
-    echo "Installing missing dependencies..."
+if [ "${#MISSING[@]}" -gt 0 ]; then
+echo "Installing missing dependencies..."
 
-    sudo apt update
-    sudo apt install -y "${MISSING[@]}"
+```
+sudo apt update
+sudo apt install -y "${MISSING[@]}"
+```
+
 else
-    echo "All dependencies are already installed."
+echo "All dependencies are already installed."
 fi
 
 echo
-echo "[1/4] Checking source files..."
+echo "[1/4] Configuring build..."
 
-mkdir -p "$PROJECT_DIR/app"
+BUILD_DIR="$PROJECT_DIR/build"
 
-BINARY="$PROJECT_DIR/app/GyroJett-OneShot"
+cmake 
+-S "$PROJECT_DIR" 
+-B "$BUILD_DIR" 
+-G Ninja
 
-if [ ! -f "$BINARY" ] ||
-   [ "$PROJECT_DIR/src/main.c" -nt "$BINARY" ] ||
-   [ "$PROJECT_DIR/src/crypto.c" -nt "$BINARY" ] ||
-   [ "$PROJECT_DIR/src/crypto.h" -nt "$BINARY" ]
-then
-    echo "Source changed or binary does not exist."
-    echo "Compiling GyroJett-OneShot..."
+echo
+echo "[2/4] Building GyroJett-OneShot2..."
 
-    gcc -std=c17 -Wall -Wextra -O2 -pthread \
-        "$PROJECT_DIR/src/main.c" \
-        "$PROJECT_DIR/src/crypto.c" \
-        $(pkg-config --cflags --libs gpgme) \
-        -o "$BINARY"
+cmake 
+--build "$BUILD_DIR"
 
-    echo "Compilation complete."
-else
-    echo "Binary is already up to date. Skipping compilation."
+BINARY="$BUILD_DIR/GyroJett-OneShot2"
+
+if [ ! -x "$BINARY" ]; then
+echo
+echo "Error: GyroJett-OneShot2 binary was not created."
+exit 1
 fi
 
-echo "[2/4] Configuring Tor..."
+echo
+echo "Build completed successfully."
 
-if grep -qF "ControlPort 9051" /etc/tor/torrc &&
-   grep -qF "CookieAuthentication 1" /etc/tor/torrc &&
-   grep -qF "HiddenServiceDir /var/lib/tor/gyrojet1s/" /etc/tor/torrc &&
-   grep -qF "HiddenServicePort 4242 127.0.0.1:4242" /etc/tor/torrc
-then
-    echo "GyroJett Tor configuration already exists. Nothing to add."
+echo
+echo "[3/4] Configuring Tor..."
+
+TORRC="/etc/tor/torrc"
+
+if grep -qF "ControlPort 9051" "$TORRC"; then
+echo "ControlPort 9051 already configured."
 else
-    sudo bash -c 'cat >> /etc/tor/torrc <<EOF
+sudo bash -c 'printf "\n# GyroJett-OneShot2\nControlPort 9051\n" >> /etc/tor/torrc'
 
-# GyroJett-OneShot
-ControlPort 9051
-CookieAuthentication 1
+```
+echo "ControlPort 9051 added."
+```
 
-HiddenServiceDir /var/lib/tor/gyrojet1s/
-HiddenServicePort 4242 127.0.0.1:4242
-EOF'
-
-    echo "GyroJett Tor configuration added."
 fi
 
-echo "[3/4] Restarting Tor..."
+if grep -qF "CookieAuthentication 1" "$TORRC"; then
+echo "CookieAuthentication already configured."
+else
+sudo bash -c 'printf "CookieAuthentication 1\n" >> /etc/tor/torrc'
 
-sudo systemctl restart tor@default.service
+```
+echo "CookieAuthentication added."
+```
 
-echo "Waiting for Tor Onion Service..."
+fi
+
+echo
+echo "Restarting Tor..."
+
+sudo systemctl enable [tor@default.service](mailto:tor@default.service)
+sudo systemctl restart [tor@default.service](mailto:tor@default.service)
+
+echo
+echo "Checking Tor ControlPort..."
 
 for i in {1..30}; do
-    if sudo test -f /var/lib/tor/gyrojet1s/hostname; then
-        break
-    fi
-
-    sleep 1
-done
-
-if ! sudo test -f /var/lib/tor/gyrojet1s/hostname; then
-    echo "Error: Tor Onion Service hostname was not created."
-    exit 1
+if ss -lnt 2>/dev/null | grep -q "127.0.0.1:9051"; then
+break
 fi
 
-echo "Tor Onion Service is ready."
+```
+sleep 1
+```
 
-sudo install -d -m 755 /var/lib/gyrojet-oneshot
+done
 
-sudo cp \
-    /var/lib/tor/gyrojet1s/hostname \
-    /var/lib/gyrojet-oneshot/hostname
+if ! ss -lnt 2>/dev/null | grep -q "127.0.0.1:9051"; then
+echo
+echo "Error: Tor ControlPort 9051 is not available."
+echo
+echo "Check:"
+echo "  sudo systemctl status [tor@default.service](mailto:tor@default.service)"
+echo "  sudo journalctl -u [tor@default.service](mailto:tor@default.service) -n 50 --no-pager"
+exit 1
+fi
 
-sudo chown "$USER":"$USER" \
-    /var/lib/gyrojet-oneshot/hostname
-
-sudo chmod 644 \
-    /var/lib/gyrojet-oneshot/hostname
-
-echo "[4/4] Installing GyroJett-OneShot..."
-
-sudo install -m 755 \
-    "$BINARY" \
-    /usr/local/bin/gyrojett-oneshot
+echo "Tor ControlPort is ready."
 
 echo
-echo "GyroJett-OneShot installed!"
-echo "Binary: /usr/local/bin/gyrojett-oneshot"
+echo "[4/4] Configuring user permissions..."
+
+if id -nG "$USER" | tr ' ' '\n' | grep -qx "debian-tor"; then
+echo "User $USER is already in the debian-tor group."
+else
+sudo usermod -aG debian-tor "$USER"
+
+```
+echo
+echo "User $USER was added to the debian-tor group."
+echo "Please log out and log back in before running GyroJett-OneShot2."
+```
+
+fi
+
+echo
+echo "Installing GyroJett-OneShot2..."
+
+sudo install 
+-m 755 
+"$BINARY" 
+/usr/local/bin/gyrojett-oneshot2
+
+echo
+echo "#######################################"
+echo "#     GyroJett-OneShot2 installed!    #"
+echo "#######################################"
+echo
+echo "Binary:"
+echo "  /usr/local/bin/GyroJett-OneShot2"
+echo
+echo "Run with:"
+echo "  GyroJett-OneShot2"
+echo
+echo "Important:"
+echo "  If you were added to the debian-tor group,"
+echo "  log out and log back in before running it."
+echo

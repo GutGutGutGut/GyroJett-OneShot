@@ -2,7 +2,7 @@
   <img src="assets/GyroJett.png" width="420">
 </p>
 
-<h1 align="center">GyroJett OneShot</h1>
+<h1 align="center">GyroJett-OneShot2</h1>
 
 <p align="center">
   <b>Lightweight • Secure • Privacy-focused Messenger</b>
@@ -12,224 +12,394 @@
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg">
   </a>
-  <img src="https://img.shields.io/github/last-commit/GutGutGutGut/GyroJett-Oneshot">
-  <img src="https://img.shields.io/github/stars/GutGutGutGut/GyroJett-Oneshot">
+  <img src="https://img.shields.io/github/last-commit/GutGutGutGut/GyroJett-OneShot2">
+  <img src="https://img.shields.io/github/stars/GutGutGutGut/GyroJett-OneShot2">
 </p>
+
 ---
 
 ## About
 
-**GyroJett OneShot** is a lightweight messaging project focused on **privacy, security and simplicity**.
+**GyroJett-OneShot2** is an experimental, lightweight messenger written in C and designed around privacy, security and simplicity.
 
-The goal is to build a messenger that keeps the communication stack small, understandable and free from unnecessary features.
-
-No giant framework.
+The project aims to keep the communication stack small, understandable and free from unnecessary services and dependencies.
 
 No advertising.
 
 No unnecessary telemetry.
 
-Just a small messenger built with privacy in mind.
+No centralized messaging infrastructure.
+
+Just a small, privacy-oriented messenger built from the ground up.
 
 > **Lightweight. Secure. Private.**
 
-## Why?
+## Philosophy
 
-Modern messaging applications can become extremely complex, bringing along analytics, tracking, large dependency trees and services that users don't necessarily need.
+Modern messaging applications can become extremely complex, relying on large dependency trees, analytics, centralized infrastructure and services that users may not need.
 
-GyroJett OneShot takes a different approach:
+GyroJett-OneShot2 takes a different approach.
+
+The project is designed around:
+
+* A small native C codebase
+* Tor-native networking
+* Temporary communication sessions
+* Minimal persistent data
+* Explicit session authentication
+* End-to-end cryptographic communication
+* Minimal external dependencies
+* A CLI-first architecture
+
+The command-line interface is the primary interface of the project. Other frontends may be developed in the future without replacing the underlying core.
+
+## Architecture
+
+The current architecture is centered around temporary Tor-based sessions.
 
 ```text
-                    ┌──────────────────┐
-                    │  GyroJett Server │
-                    │                  │
-                    │   Tor / Network  │
-                    └────────┬─────────┘
-                             │
-                 ┌───────────┴───────────┐
-                 │                       │
-          ┌──────▼──────┐         ┌──────▼──────┐
-          │   Client A  │         │   Client B  │
-          │             │         │             │
-          │    GPG      │         │    GPG      │
-          └─────────────┘         └─────────────┘
+                         ┌──────────────────────────────┐
+                         │      GyroJett-OneShot2       │
+                         │                              │
+                         │          CLI / Core          │
+                         └──────────────┬───────────────┘
+                                        │
+                    ┌───────────────────┴───────────────────┐
+                    │                                       │
+             ┌──────▼──────┐                         ┌──────▼──────┐
+             │ Create       │                         │ Connect     │
+             │ Session      │                         │ Session     │
+             └──────┬───────┘                         └──────┬──────┘
+                    │                                        │
+                    ▼                                        ▼
+             ┌──────────────┐                         ┌──────────────┐
+             │    Server    │                         │    Client    │
+             │              │                         │              │
+             │ TCP :4242    │                         │ SOCKS5       │
+             └──────┬───────┘                         └──────┬───────┘
+                    │                                        │
+                    └────────────────┬───────────────────────┘
+                                     │
+                                     ▼
+                         ┌────────────────────────┐
+                         │          TOR           │
+                         │                        │
+                         │ ControlPort :9051      │
+                         │ SOCKS5 :9050           │
+                         │ Onion Service          │
+                         └───────────┬────────────┘
+                                     │
+                                     ▼
+                         ┌────────────────────────┐
+                         │     Session Address    │
+                         │                        │
+                         │        .onion          │
+                         └───────────┬────────────┘
+                                     │
+                                     ▼
+                         ┌────────────────────────┐
+                         │    Authentication      │
+                         │                        │
+                         │    Session Secret      │
+                         └───────────┬────────────┘
+                                     │
+                                     ▼
+                         ┌────────────────────────┐
+                         │    Key Establishment   │
+                         │                        │
+                         │   PQ / X25519 + KDF    │
+                         └───────────┬────────────┘
+                                     │
+                                     ▼
+                         ┌────────────────────────┐
+                         │   Secure Messaging     │
+                         │                        │
+                         │     AEAD + Ratchet     │
+                         └────────────────────────┘
 ```
 
-The project is designed around minimizing unnecessary complexity while keeping security and privacy as core goals.
+The architecture is intentionally modular so that networking, session management, protocol logic and cryptographic functionality remain separated.
 
-## Features
+## Current Features
 
-Current and planned features include:
+Currently implemented:
 
-* Lightweight C implementation
-* Privacy-oriented architecture
-* End-to-end cryptographic communication
-* GPG-based identity
-* Tor support
-* Minimal dependencies
-* No advertising
-* No unnecessary telemetry
-* Temporary messaging
+* C17 codebase
+* Modular CMake project
+* Ninja build support
+* CLI interface
+* TCP server
+* TCP client
+* SOCKS5 support
+* Tor ControlPort integration
+* Tor cookie authentication
+* Dynamic Onion Service creation using `ADD_ONION`
+* Ephemeral Onion Services
+* 512-bit session secret generation
+* Custom base-61 session secret representation
+* Basic connection management
+* Signal handling for `SIGPIPE`
+
+## Planned Features
+
+The following components are planned or under development:
+
+* Session authentication
+* Messaging protocol
+* Secure handshake
+* Key establishment
+* End-to-end encryption
+* AEAD-based message encryption
+* Ratcheting protocol
 * Secure file transfer
+* Connection management
+* Protocol validation
+* Additional security hardening
+* Automated testing
+* Security review
+* Future graphical frontend
 
-Some features are still under development.
+Cryptographic primitives are intended to rely on established and audited cryptographic libraries rather than custom implementations.
 
 ## Project Status
 
-**Early development**
+**Early development / experimental**
 
-GyroJett OneShot is currently a work in progress.
+GyroJett-OneShot2 is currently under active development.
 
-The project is experimental and its architecture may change significantly as development continues.
+The architecture is expected to evolve significantly before the first stable release.
+
+The project should **not** currently be considered production-ready secure messaging software.
 
 ### Roadmap
 
-* [x] Initial project
-* [x] Basic C implementation
+* [x] Initial C project
+* [x] Modular project architecture
+* [x] CLI
+* [x] CMake build system
+* [x] Ninja build support
+* [x] TCP server
+* [x] TCP client
+* [x] SOCKS5 support
+* [x] Tor integration
+* [x] Dynamic Onion Service creation
+* [x] Session secret generation
+* [ ] Session authentication
 * [ ] Messaging protocol
-* [X] Tor integration
-* [ ] GPG identity system
+* [ ] Secure handshake
+* [ ] Key establishment
 * [ ] End-to-end encryption
-* [X] Message handling
+* [ ] Ratcheting
 * [ ] Secure file transfer
 * [ ] Connection management
-* [ ] Better error handling
+* [ ] Automated tests
 * [ ] Security review
-* [X] Documentation
 * [ ] Stable release
+* [ ] Optional graphical frontend
 
 ## Building
 
 ### Requirements
 
-Currently, development is primarily targeted at Linux.
+GyroJett-OneShot2 currently targets Linux.
 
-Required tools:
+Build dependencies:
 
 * GCC
-* BinUtils
+* GNU Binutils
+* CMake >= 3.20
+* Ninja
+
+Runtime dependency:
+
 * Tor
-* PKG-Config
-* libgpgme-dev
-* GPG
+
+On Debian-based systems:
+
+```bash
+sudo apt install build-essential cmake ninja-build tor
+```
 
 ### Clone
 
 ```bash
-git clone https://github.com/GutGutGutGut/GyroJett-Oneshot.git
-cd GyroJett-Oneshot
+git clone https://github.com/GutGutGutGut/GyroJett-OneShot2.git
+cd GyroJett-OneShot2
+```
+
+### Configure
+
+```bash
+cmake -S . -B build -G Ninja
 ```
 
 ### Build
 
 ```bash
-chmod +x app/Instaler.sh
+cmake --build build
+```
+
+The resulting executable will be located at:
+
+```text
+build/GyroJett-OneShot2
 ```
 
 ### Run
 
 ```bash
-./app/Instaler.sh
-
-gyrojet-oneshot server 4242
-Or
-gyrojet-oneshot connect ExempleExemple.onion 4242
-
+./build/GyroJett-OneShot2
 ```
+
+## Tor Configuration
+
+GyroJett-OneShot2 currently communicates with a local Tor instance through the Tor ControlPort and SOCKS5 interface.
+
+The relevant Tor configuration is:
+
+```text
+ControlPort 9051
+CookieAuthentication 1
+```
+
+The application uses the Tor ControlPort to dynamically create temporary Onion Services.
+
+Static `HiddenServiceDir` configuration is not required for GyroJett-OneShot2.
+
+The application currently uses:
+
+```text
+127.0.0.1:9051
+```
+
+for the Tor ControlPort and:
+
+```text
+127.0.0.1:9050
+```
+
+for SOCKS5 connections.
+
+## Sessions
+
+A GyroJett session currently consists of a temporary Onion Service and a generated session secret.
+
+Conceptually:
+
+```text
+Session
+├── Onion Service address
+│
+└── Session Secret
+```
+
+The Onion address identifies the network endpoint of the temporary session.
+
+The session secret is intended to provide an additional authentication mechanism between peers.
+
+The secret is currently generated using 512 bits of operating-system-provided randomness.
+
+The session secret is **not currently used as a message-encryption key**.
+
+Authentication and cryptographic key establishment are separate protocol stages and are still under development.
 
 ## Security
 
-Security is one of the main goals of GyroJett OneShot.
+Security is one of the primary goals of GyroJett-OneShot2.
 
 The project aims to minimize:
 
 * Metadata exposure
 * Persistent message storage
 * Unnecessary network communication
-* Third-party dependencies
+* Dependency complexity
 * User tracking
+* Centralized infrastructure
 
-Cryptographic functionality is intended to use established cryptographic software rather than implementing cryptographic primitives from scratch.
+Tor provides the network transport layer, while application-level cryptography is intended to provide protection for the actual communication protocol.
 
-### Security status
+### Important
 
-**This project has not undergone a professional security audit.**
+**GyroJett-OneShot2 has not undergone a professional security audit.**
 
-Do not assume that GyroJett OneShot is secure simply because it uses cryptography or Tor.
+Do not assume that the application is secure simply because it uses Tor or cryptography.
 
-Security-sensitive software requires careful review, testing and auditing.
+Security-sensitive software requires extensive testing, protocol analysis, code review and independent auditing.
 
-If you find a security vulnerability, please report it responsibly.
+The current software should be considered experimental.
 
 ## Privacy
 
-GyroJett OneShot is designed around the idea that a messenger should collect as little information as reasonably possible.
+GyroJett-OneShot2 is designed around the principle of minimizing unnecessary data collection.
 
-The project does not aim to build a user-tracking ecosystem.
+Privacy goals include:
 
-Privacy-related goals include:
-
-* Minimal metadata
 * No advertising
 * No behavioral tracking
 * Minimal logging
-* Anonymous networking through Tor
-* Cryptographic identities
+* Minimal persistent messaging data
+* Tor-based networking
+* Temporary communication sessions
+* Minimal external dependencies
 
-## Architecture
+Privacy guarantees depend on the final implementation and protocol design and should not be considered complete at the current development stage.
 
-The project intentionally aims to keep the architecture small.
-
-```text
-┌───────────────────────────────────────────┐
-│               GyroJett OneShot            │
-├───────────────────────────────────────────┤
-│                                           │
-│              Application Layer            │
-│                                           │
-├───────────────────────────────────────────┤
-│            Messaging Protocol             │
-│                                           │
-├───────────────────────────────────────────┤
-│             Cryptographic Layer           │
-│                 GPG / OpenPGP             │
-│                                           │
-├───────────────────────────────────────────┤
-│                Network Layer              │
-│                    Tor                    │
-│                                           │
-└───────────────────────────────────────────┘
-```
-
-The architecture is still evolving.
-
-## Repository Structure
+## Project Structure
 
 ```text
-
-GyroJett-Oneshot/
-├── app/
-│   └── GyroJett-OneShot
-├── assets/
-├── Instaler/
-│   └── Instaler.sh
+GyroJett-OneShot2/
+├── CMakeLists.txt
+├── README.md
+├── LICENSE
 ├── src/
 │   ├── main.c
-│   ├── crypto.c
-│   └── crypto.h
-├── LICENSE
-└── README.md
+│   │
+│   ├── core/
+│   │   ├── core.c
+│   │   └── core.h
+│   │
+│   ├── cli/
+│   │   ├── cli.c
+│   │   └── cli.h
+│   │
+│   ├── tor/
+│   │   ├── tor.c
+│   │   └── tor.h
+│   │
+│   ├── server/
+│   │   ├── server.c
+│   │   └── server.h
+│   │
+│   ├── network/
+│   │   ├── socks5.c
+│   │   ├── socks5.h
+│   │   ├── connection.c
+│   │   └── connection.h
+│   │
+│   ├── client/
+│   │   ├── client.c
+│   │   └── client.h
+│   │
+│   └── session/
+│       ├── secret.c
+│       └── secret.h
+│
+├── tests/
+└── installer/
+    └── install.sh
 ```
+
+The architecture is intentionally modular so that new protocol, cryptographic and identity components can be added without turning the application into a monolithic codebase.
 
 ## Contributing
 
 Contributions, ideas, bug reports and security reviews are welcome.
 
-If you want to contribute:
+To contribute:
 
 ```bash
-git clone https://github.com/GutGutGutGut/GyroJett-Oneshot.git
-cd GyroJett-Oneshot
+git clone https://github.com/GutGutGutGut/GyroJett-OneShot2.git
+cd GyroJett-OneShot2
 ```
 
 Create a branch:
@@ -238,13 +408,19 @@ Create a branch:
 git checkout -b feature/my-feature
 ```
 
-Make your changes, test them and submit a pull request.
+Build and test your changes before submitting a pull request.
 
-Please keep the project lightweight and avoid unnecessary dependencies.
+Please keep the project:
+
+* Lightweight
+* Modular
+* Understandable
+* Security-conscious
+* Free from unnecessary dependencies
 
 ## License
 
-GyroJett OneShot is free and open-source software.
+GyroJett-OneShot2 is free and open-source software.
 
 Licensed under the **GNU General Public License v3.0**.
 
@@ -252,7 +428,7 @@ See [`LICENSE`](LICENSE) for the complete license.
 
 ## Disclaimer
 
-GyroJett OneShot is experimental software.
+GyroJett-OneShot2 is experimental software.
 
 It is provided **"as is"**, without warranty of any kind.
 
@@ -261,7 +437,8 @@ The project has not been professionally audited and should not be relied upon fo
 ---
 
 <p align="center">
-  <b>GyroJett OneShot</b>
+  <b>GyroJett-OneShot2</b>
   <br>
   <sub>Lightweight. Secure. Privacy-focused.</sub>
 </p>
+
