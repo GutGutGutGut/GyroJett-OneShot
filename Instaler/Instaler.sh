@@ -4,25 +4,65 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo "Installing dependencies..."
+echo "Checking dependencies..."
 
-sudo apt install -y \
-    gcc \
-    binutils \
-    tor \
-    pkg-config \
-    libgpgme-dev \
+PACKAGES=(
+    gcc
+    binutils
+    tor
+    pkg-config
+    libgpgme-dev
     gpg
+)
 
-echo "[1/4] Compiling GyroJett-OneShot..."
+MISSING=()
+
+for package in "${PACKAGES[@]}"; do
+    if dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q "install ok installed"; then
+        VERSION=$(dpkg-query -W -f='${Version}' "$package")
+        echo "  $package $VERSION [OK]"
+    else
+        echo "  $package [MISSING]"
+        MISSING+=("$package")
+    fi
+done
+
+echo
+
+if [ ${#MISSING[@]} -gt 0 ]; then
+    echo "Installing missing dependencies..."
+
+    sudo apt update
+    sudo apt install -y "${MISSING[@]}"
+else
+    echo "All dependencies are already installed."
+fi
+
+echo
+echo "[1/4] Checking source files..."
 
 mkdir -p "$PROJECT_DIR/app"
 
-gcc -std=c17 -Wall -Wextra -O2 -pthread \
-    "$PROJECT_DIR/src/main.c" \
-    "$PROJECT_DIR/src/crypto.c" \
-    $(pkg-config --cflags --libs gpgme) \
-    -o "$PROJECT_DIR/app/GyroJett-OneShot"
+BINARY="$PROJECT_DIR/app/GyroJett-OneShot"
+
+if [ ! -f "$BINARY" ] ||
+   [ "$PROJECT_DIR/src/main.c" -nt "$BINARY" ] ||
+   [ "$PROJECT_DIR/src/crypto.c" -nt "$BINARY" ] ||
+   [ "$PROJECT_DIR/src/crypto.h" -nt "$BINARY" ]
+then
+    echo "Source changed or binary does not exist."
+    echo "Compiling GyroJett-OneShot..."
+
+    gcc -std=c17 -Wall -Wextra -O2 -pthread \
+        "$PROJECT_DIR/src/main.c" \
+        "$PROJECT_DIR/src/crypto.c" \
+        $(pkg-config --cflags --libs gpgme) \
+        -o "$BINARY"
+
+    echo "Compilation complete."
+else
+    echo "Binary is already up to date. Skipping compilation."
+fi
 
 echo "[2/4] Configuring Tor..."
 
@@ -82,7 +122,7 @@ sudo chmod 644 \
 echo "[4/4] Installing GyroJett-OneShot..."
 
 sudo install -m 755 \
-    "$PROJECT_DIR/app/GyroJett-OneShot" \
+    "$BINARY" \
     /usr/local/bin/gyrojett-oneshot
 
 echo
