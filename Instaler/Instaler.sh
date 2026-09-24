@@ -51,16 +51,12 @@ echo "[1/4] Configuring build..."
 
 BUILD_DIR="$PROJECT_DIR/build"
 
-cmake 
--S "$PROJECT_DIR" 
--B "$BUILD_DIR" 
--G Ninja
+cmake -S "$PROJECT_DIR" -B "$BUILD_DIR" -G Ninja
 
 echo
 echo "[2/4] Building GyroJett-OneShot2..."
 
-cmake 
---build "$BUILD_DIR"
+cmake --build "$BUILD_DIR"
 
 BINARY="$BUILD_DIR/GyroJett-OneShot2"
 
@@ -151,10 +147,7 @@ fi
 echo
 echo "Installing GyroJett-OneShot2..."
 
-sudo install 
--m 755 
-"$BINARY" 
-/usr/local/bin/gyrojett-oneshot2
+sudo install -m 755 "$BINARY" /usr/local/bin/gyrojett-oneshot2
 
 echo
 echo "#######################################"
