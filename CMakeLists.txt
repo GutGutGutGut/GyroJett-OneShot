@@ -10,20 +10,41 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
+find_package(OpenSSL 3.5 REQUIRED COMPONENTS Crypto)
+
 add_executable(GyroJett-OneShot2
     src/main.c
+
     src/core/core.c
+
     src/cli/cli.c
+
     src/tor/tor.c
+
     src/server/server.c
+
     src/network/connection.c
     src/network/socks5.c
+
     src/client/client.c
+
     src/session/secret.c
+
+    src/crypto/crypto.c
+    src/crypto/x25519.c
+    src/crypto/mlkem.c
+
+    src/identity/identity.c
+
+    src/handshake/pqxdh.c
 )
 
 target_include_directories(GyroJett-OneShot2 PRIVATE
     src
+)
+
+target_link_libraries(GyroJett-OneShot2 PRIVATE
+    OpenSSL::Crypto
 )
 
 target_compile_options(GyroJett-OneShot2 PRIVATE
