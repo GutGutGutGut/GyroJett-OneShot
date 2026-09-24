@@ -18,6 +18,7 @@ binutils
 cmake
 ninja-build
 tor
+libssl-dev
 )
 
 MISSING=()
