@@ -22,7 +22,6 @@ add_executable(GyroJett-OneShot2
     src/tor/tor.c
 
     src/server/server.c
-
     src/network/connection.c
     src/network/socks5.c
 
@@ -33,6 +32,8 @@ add_executable(GyroJett-OneShot2
     src/crypto/crypto.c
     src/crypto/x25519.c
     src/crypto/mlkem.c
+    src/crypto/xeddsa.c
+    src/crypto/aead.c
 
     src/identity/identity.c
 
@@ -45,6 +46,7 @@ target_include_directories(GyroJett-OneShot2 PRIVATE
 
 target_link_libraries(GyroJett-OneShot2 PRIVATE
     OpenSSL::Crypto
+    xeddsa
 )
 
 target_compile_options(GyroJett-OneShot2 PRIVATE

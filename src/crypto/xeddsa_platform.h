@@ -1,0 +1,6 @@
+#ifndef GYROJET_XEDDSA_PLATFORM_H
+#define GYROJET_XEDDSA_PLATFORM_H
+
+#define INTERFACE
+
+#endif

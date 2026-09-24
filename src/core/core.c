@@ -1,15 +1,24 @@
 #include "core.h"
 
-#include "../cli/cli.h"
-
 #include <signal.h>
+
+#include "../cli/cli.h"
+#include "../crypto/crypto.h"
 
 int gyrojet_core_run(int argc, char **argv)
 {
     (void)argc;
     (void)argv;
 
-    signal(SIGPIPE, SIG_IGN);
+    if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+        return -1;
 
-    return gyrojet_cli_run();
+    if (gyrojet_crypto_init() != 0)
+        return -1;
+
+    int result = gyrojet_cli_run();
+
+    gyrojet_crypto_cleanup();
+
+    return result;
 }

@@ -1,0 +1,6 @@
+#ifndef GYROJET_CROSS_PLATFORM_H
+#define GYROJET_CROSS_PLATFORM_H
+
+#define INTERFACE
+
+#endif

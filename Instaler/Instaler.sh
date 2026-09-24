@@ -19,6 +19,8 @@ cmake
 ninja-build
 tor
 libssl-dev
+libxeddsa-dev
+libsodium-dev
 )
 
 MISSING=()

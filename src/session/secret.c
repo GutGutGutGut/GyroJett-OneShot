@@ -2,9 +2,86 @@
 
 #include "secret.h"
 
+#include <openssl/evp.h>
+#include <openssl/kdf.h>
+#include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+int gyrojet_secret_derive_key(
+    const char *secret,
+    unsigned char key[GYROJET_SESSION_KEY_SIZE]
+)
+{
+    static const unsigned char info[] =
+        "GyroJett-OneShot2 session key v1";
+
+    if (secret == NULL || key == NULL)
+        return -1;
+
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(
+        EVP_PKEY_HKDF,
+        NULL
+    );
+
+    if (ctx == NULL)
+        return -1;
+
+    int result = -1;
+
+    if (EVP_PKEY_derive_init(ctx) != 1)
+        goto cleanup;
+
+    if (EVP_PKEY_CTX_set_hkdf_md(
+            ctx,
+            EVP_sha256()
+        ) != 1) {
+        goto cleanup;
+    }
+
+    size_t secret_size = strlen(secret);
+
+      if (secret_size > INT_MAX)
+       goto cleanup;
+
+        if (EVP_PKEY_CTX_set1_hkdf_key(
+         ctx,
+          (const unsigned char *)secret,
+           (int)secret_size
+             ) != 1) {
+        goto cleanup;
+    }
+
+    if (EVP_PKEY_CTX_add1_hkdf_info(
+            ctx,
+            info,
+            sizeof(info) - 1
+        ) != 1) {
+        goto cleanup;
+    }
+
+    size_t key_size = GYROJET_SESSION_KEY_SIZE;
+
+    if (EVP_PKEY_derive(
+            ctx,
+            key,
+            &key_size
+        ) != 1) {
+        goto cleanup;
+    }
+
+    if (key_size != GYROJET_SESSION_KEY_SIZE)
+        goto cleanup;
+
+    result = 0;
+
+cleanup:
+    EVP_PKEY_CTX_free(ctx);
+
+    return result;
+}
 
 int gyrojet_secret_generate(
     char *output,

@@ -1,6 +1,11 @@
 #ifndef GYROJET_SERVER_H
 #define GYROJET_SERVER_H
 
+
+#include <stddef.h>
+
+#define GYROJET_SERVER_SESSION_KEY_SIZE 32
+
 typedef struct {
     int socket_fd;
     unsigned short port;
@@ -11,11 +16,14 @@ int gyrojet_server_start(
     unsigned short port
 );
 
-void gyrojet_server_stop(
-    gyrojet_server_t *server
+int gyrojet_server_run(
+    gyrojet_server_t *server,
+    const unsigned char session_key[
+        GYROJET_SERVER_SESSION_KEY_SIZE
+    ]
 );
 
-int gyrojet_server_run(
+void gyrojet_server_stop(
     gyrojet_server_t *server
 );
 

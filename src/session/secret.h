@@ -3,6 +3,13 @@
 
 #include <stddef.h>
 
+#define GYROJET_SESSION_KEY_SIZE 32
+
+int gyrojet_secret_derive_key(
+    const char *secret,
+    unsigned char key[GYROJET_SESSION_KEY_SIZE]
+);
+
 #define GYROJET_SECRET_ENTROPY_BYTES 64
 
 #define GYROJET_SECRET_ENTROPY_BITS \
@@ -10,6 +17,13 @@
 
 #define GYROJET_SECRET_ALPHABET \
     "0123456789abcdefghijklmnopqrstuvwxyzBCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+#define GYROJET_SESSION_KEY_SIZE 32
+
+int gyrojet_secret_derive_key(
+    const char *secret,
+    unsigned char key[GYROJET_SESSION_KEY_SIZE]
+);
 
 #define GYROJET_SECRET_ALPHABET_SIZE \
     (sizeof(GYROJET_SECRET_ALPHABET) - 1)
