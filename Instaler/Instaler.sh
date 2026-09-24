@@ -99,8 +99,7 @@ fi
 echo
 echo "Restarting Tor..."
 
-sudo systemctl enable [tor@default.service](mailto:tor@default.service)
-sudo systemctl restart [tor@default.service](mailto:tor@default.service)
+sudo systemctl restart tor@default.service
 
 echo
 echo "Checking Tor ControlPort..."
