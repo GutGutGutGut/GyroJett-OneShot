@@ -40,10 +40,10 @@ echo
 if [ "${#MISSING[@]}" -gt 0 ]; then
 echo "Installing missing dependencies..."
 
-```
+
 sudo apt update
 sudo apt install -y "${MISSING[@]}"
-```
+
 
 else
 echo "All dependencies are already installed."
@@ -82,9 +82,9 @@ echo "ControlPort 9051 already configured."
 else
 sudo bash -c 'printf "\n# GyroJett-OneShot2\nControlPort 9051\n" >> /etc/tor/torrc'
 
-```
+
 echo "ControlPort 9051 added."
-```
+
 
 fi
 
@@ -93,9 +93,9 @@ echo "CookieAuthentication already configured."
 else
 sudo bash -c 'printf "CookieAuthentication 1\n" >> /etc/tor/torrc'
 
-```
+
 echo "CookieAuthentication added."
-```
+
 
 fi
 
@@ -112,9 +112,9 @@ if ss -lnt 2>/dev/null | grep -q "127.0.0.1:9051"; then
 break
 fi
 
-```
+
 sleep 1
-```
+
 
 done
 
@@ -138,11 +138,11 @@ echo "User $USER is already in the debian-tor group."
 else
 sudo usermod -aG debian-tor "$USER"
 
-```
+
 echo
 echo "User $USER was added to the debian-tor group."
 echo "Please log out and log back in before running GyroJett-OneShot2."
-```
+
 
 fi
 
