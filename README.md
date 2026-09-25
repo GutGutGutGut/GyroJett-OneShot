@@ -223,14 +223,14 @@ cd GyroJett-OneShot2
 ### Configure
 
 ```bash
-cd Instaler/
+cd Installer/
 ```
 
 ### Build
 
 ```bash
-chmod +x Instaler.sh
-./Instaler.sh
+chmod +x Installer.sh
+./Installer.sh
 ```
 
 The resulting executable will be located at:
