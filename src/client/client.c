@@ -47,7 +47,7 @@ int gyrojet_client_connect(
     }
 
     printf(
-        "✓ Conexão estabelecida.\n"
+        "OK: Conexão estabelecida.\n"
     );
 
     int result = gyrojet_chat_run(

@@ -298,14 +298,14 @@ int gyrojet_chat_run(
     }
 
     printf("\n");
-    printf("========================================\n");
-    printf("          GyroJett Chat\n");
-    printf("========================================\n");
-    printf("\n");
-    printf("Conversa iniciada.\n");
-    printf("Digite uma mensagem e pressione Enter.\n");
-    printf("Ctrl+D encerra a conversa.\n");
-    printf("\n");
+    printf("##########################################\n");
+    printf("#         GyroJett-OneShot2 Chat         #\n");
+    printf("##########################################\n");
+    printf("#                                        #\n");
+    printf("# Conversa iniciada.                     #\n");
+    printf("# Digite uma mensagem e pressione Enter. #\n");
+    printf("# Ctrl+D encerra a conversa.             #\n");
+    printf("##########################################\n");
 
     for (;;) {
         fd_set read_fds;
@@ -360,7 +360,7 @@ int gyrojet_chat_run(
 
             if (result == GYROJET_CHAT_RECV_CLOSED) {
                 printf(
-                    "\nPeer encerrou a conexão.\n"
+                    "\nUser encerrou a conversa.\n"
                 );
 
                 gyrojet_crypto_secure_zero(
@@ -389,7 +389,7 @@ int gyrojet_chat_run(
             message[message_size] = '\0';
 
             printf(
-                "\nPeer: %s\n",
+                "\nUser> %s\n",
                 message
             );
 
@@ -426,7 +426,7 @@ int gyrojet_chat_run(
                 ) == NULL) {
 
                 printf(
-                    "\nEncerrando conversa...\n"
+                    "\nEncerrando a conversa...\n"
                 );
 
                 shutdown(

@@ -32,16 +32,16 @@ static int read_choice(void)
 int gyrojet_cli_run(void)
 {
     for (;;) {
-        printf("\n");
-        printf("GyroJett-OneShot2\n");
-        printf("#--------------------------#\n");
-        printf("\n");
-        printf("O que você deseja fazer?\n");
-        printf("\n");
-        printf("  [1] Criar uma sessão\n");
-        printf("  [2] Conectar a uma sessão\n");
-        printf("  [3] Sair\n");
-        printf("\n");
+        printf("###############################\n");
+        printf("#     GyroJett-OneShot2       #\n");
+        printf("###############################\n");
+        printf("#                             #\n");
+        printf("# O que você deseja fazer?    #\n");
+        printf("#                             #\n");
+        printf("#  [1] Criar uma sessão       #\n");
+        printf("#  [2] Conectar a uma sessão  #\n");
+        printf("#  [3] Sair                   #\n");
+        printf("###############################\n");
 
         int choice = read_choice();
 
@@ -63,7 +63,7 @@ int gyrojet_cli_run(void)
 
                 printf("\n");
                 printf("Criar uma sessão\n");
-                printf("----------------\n");
+                printf("#########################\n");
                 printf("\n");
 
                 printf("Iniciando servidor...\n");
@@ -77,8 +77,6 @@ int gyrojet_cli_run(void)
                     break;
                 }
 
-                printf("✓ Servidor iniciado.\n");
-
                 printf("Conectando ao Tor...\n");
 
                 if (gyrojet_tor_start(&tor, port) < 0) {
@@ -91,8 +89,6 @@ int gyrojet_cli_run(void)
 
                     break;
                 }
-
-                printf("✓ Onion Service criado.\n");
 
                 printf("Gerando segredo da sessão...\n");
 
@@ -111,8 +107,6 @@ int gyrojet_cli_run(void)
 
                     break;
                 }
-
-                printf("✓ Segredo gerado.\n");
 
                 printf("Derivando chave da sessão...\n");
 
@@ -143,24 +137,22 @@ int gyrojet_cli_run(void)
                     break;
                 }
 
-                printf("✓ Chave da sessão derivada.\n");
-
                 printf("\n");
-                printf("#========================================#\n");
+                printf("##########################################\n");
                 printf("#           SESSÃO CRIADA                #\n");
-                printf("#========================================#\n");
-                printf("\n");
+                printf("##########################################\n");
+                printf("------------------------------------------\n");
 
                 printf("Endereço .onion:\n");
                 printf("%s\n", tor.onion_address);
 
-                printf("\n");
+                printf("                                          \n");
 
                 printf("Segredo da sessão:\n");
                 printf("%s\n", secret);
 
-                printf("\n");
-                printf("#========================================#\n");
+                printf("                                          \n");
+                printf("[########################################]\n");
                 printf("\n");
 
                 printf("Aguardando conexão...\n");
