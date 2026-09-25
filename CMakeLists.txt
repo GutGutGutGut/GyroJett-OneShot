@@ -41,6 +41,8 @@ add_executable(GyroJett-OneShot2
     src/identity/identity.c
 
     src/handshake/pqxdh.c
+    src/protocol/frame.c
+    src/protocol/protocol.c
 )
 
 target_include_directories(GyroJett-OneShot2 PRIVATE

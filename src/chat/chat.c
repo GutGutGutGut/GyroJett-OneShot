@@ -2,12 +2,10 @@
 
 #include "chat.h"
 
-#include "../crypto/aead.h"
+#include "../protocol/protocol.h"
 #include "../crypto/crypto.h"
 
-#include <arpa/inet.h>
 #include <errno.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/select.h>
@@ -20,270 +18,39 @@ enum {
     GYROJET_CHAT_RECV_CLOSED = 1
 };
 
-static int gyrojet_chat_recv_all(
-    gyrojet_connection_t *connection,
-    void *buffer,
-    size_t size
-)
-{
-    if (connection == NULL ||
-        buffer == NULL) {
-        return GYROJET_CHAT_RECV_ERROR;
-    }
-
-    unsigned char *ptr = buffer;
-    size_t received = 0;
-
-    while (received < size) {
-        ssize_t result = gyrojet_connection_recv(
-            connection,
-            ptr + received,
-            size - received
-        );
-
-        if (result < 0)
-            return GYROJET_CHAT_RECV_ERROR;
-
-        if (result == 0) {
-            if (received == 0)
-                return GYROJET_CHAT_RECV_CLOSED;
-
-            return GYROJET_CHAT_RECV_ERROR;
-        }
-
-        received += (size_t)result;
-    }
-
-    return GYROJET_CHAT_RECV_OK;
-}
-
-static int gyrojet_chat_send_message(
-    gyrojet_connection_t *connection,
-    const unsigned char key[GYROJET_CHAT_KEY_SIZE],
-    const unsigned char *message,
-    size_t message_size
-)
-{
-    if (connection == NULL ||
-        connection->fd < 0 ||
-        key == NULL) {
-        return -1;
-    }
-
-    if (message == NULL && message_size > 0)
-        return -1;
-
-    if (message_size > GYROJET_CHAT_MAX_MESSAGE_SIZE)
-        return -1;
-
-    unsigned char nonce[GYROJET_AEAD_NONCE_SIZE];
-    unsigned char ciphertext[
-        GYROJET_CHAT_MAX_MESSAGE_SIZE
-    ];
-    unsigned char tag[GYROJET_AEAD_TAG_SIZE];
-
-    uint32_t network_length = htonl(
-        (uint32_t)message_size
-    );
-
-    int result = -1;
-
-    memset(nonce, 0, sizeof(nonce));
-    memset(ciphertext, 0, sizeof(ciphertext));
-    memset(tag, 0, sizeof(tag));
-
-    if (gyrojet_crypto_random(
-            nonce,
-            sizeof(nonce)
-        ) < 0) {
-        goto cleanup;
-    }
-
-    /*
-     * O tamanho do frame faz parte do AAD.
-     *
-     * Assim, alguém não consegue alterar o tamanho
-     * declarado sem invalidar a autenticação GCM.
-     */
-    if (gyrojet_aead_encrypt(
-            key,
-            nonce,
-            message,
-            message_size,
-            (const unsigned char *)&network_length,
-            sizeof(network_length),
-            ciphertext,
-            tag
-        ) < 0) {
-        goto cleanup;
-    }
-
-    if (gyrojet_connection_send(
-            connection,
-            &network_length,
-            sizeof(network_length)
-        ) < 0) {
-        goto cleanup;
-    }
-
-    if (gyrojet_connection_send(
-            connection,
-            nonce,
-            sizeof(nonce)
-        ) < 0) {
-        goto cleanup;
-    }
-
-    if (message_size > 0) {
-        if (gyrojet_connection_send(
-                connection,
-                ciphertext,
-                message_size
-            ) < 0) {
-            goto cleanup;
-        }
-    }
-
-    if (gyrojet_connection_send(
-            connection,
-            tag,
-            sizeof(tag)
-        ) < 0) {
-        goto cleanup;
-    }
-
-    result = 0;
-
-cleanup:
-
-    gyrojet_crypto_secure_zero(
-        nonce,
-        sizeof(nonce)
-    );
-
-    gyrojet_crypto_secure_zero(
-        ciphertext,
-        sizeof(ciphertext)
-    );
-
-    gyrojet_crypto_secure_zero(
-        tag,
-        sizeof(tag)
-    );
-
-    return result;
-}
-
 static int gyrojet_chat_receive_message(
-    gyrojet_connection_t *connection,
-    const unsigned char key[GYROJET_CHAT_KEY_SIZE],
+    gyrojet_protocol_t *protocol,
     unsigned char *message,
     size_t message_capacity,
     size_t *message_size
 )
 {
-    if (connection == NULL ||
-        connection->fd < 0 ||
-        key == NULL ||
+    if (protocol == NULL ||
         message == NULL ||
         message_size == NULL) {
         return GYROJET_CHAT_RECV_ERROR;
     }
 
-    uint32_t network_length = 0;
+    gyrojet_frame_header_t header;
 
-    int result = gyrojet_chat_recv_all(
-        connection,
-        &network_length,
-        sizeof(network_length)
+    int result = gyrojet_protocol_receive(
+        protocol,
+        &header,
+        message,
+        message_capacity,
+        message_size
     );
 
-    if (result != GYROJET_CHAT_RECV_OK)
-        return result;
+    if (result > 0)
+        return GYROJET_CHAT_RECV_CLOSED;
 
-    uint32_t length = ntohl(network_length);
-
-    if (length > GYROJET_CHAT_MAX_MESSAGE_SIZE)
+    if (result < 0)
         return GYROJET_CHAT_RECV_ERROR;
 
-    if ((size_t)length > message_capacity)
+    if (header.type != GYROJET_FRAME_TEXT)
         return GYROJET_CHAT_RECV_ERROR;
 
-    unsigned char nonce[GYROJET_AEAD_NONCE_SIZE];
-    unsigned char ciphertext[
-        GYROJET_CHAT_MAX_MESSAGE_SIZE
-    ];
-    unsigned char tag[GYROJET_AEAD_TAG_SIZE];
-
-    memset(nonce, 0, sizeof(nonce));
-    memset(ciphertext, 0, sizeof(ciphertext));
-    memset(tag, 0, sizeof(tag));
-
-    result = gyrojet_chat_recv_all(
-        connection,
-        nonce,
-        sizeof(nonce)
-    );
-
-    if (result != GYROJET_CHAT_RECV_OK)
-        goto cleanup;
-
-    if (length > 0) {
-        result = gyrojet_chat_recv_all(
-            connection,
-            ciphertext,
-            (size_t)length
-        );
-
-        if (result != GYROJET_CHAT_RECV_OK)
-            goto cleanup;
-    }
-
-    result = gyrojet_chat_recv_all(
-        connection,
-        tag,
-        sizeof(tag)
-    );
-
-    if (result != GYROJET_CHAT_RECV_OK)
-        goto cleanup;
-
-    if (gyrojet_aead_decrypt(
-            key,
-            nonce,
-            ciphertext,
-            (size_t)length,
-            (const unsigned char *)&network_length,
-            sizeof(network_length),
-            tag,
-            message
-        ) < 0) {
-        result = GYROJET_CHAT_RECV_ERROR;
-        goto cleanup;
-    }
-
-    *message_size = (size_t)length;
-
-    result = GYROJET_CHAT_RECV_OK;
-
-cleanup:
-
-    gyrojet_crypto_secure_zero(
-        nonce,
-        sizeof(nonce)
-    );
-
-    gyrojet_crypto_secure_zero(
-        ciphertext,
-        sizeof(ciphertext)
-    );
-
-    gyrojet_crypto_secure_zero(
-        tag,
-        sizeof(tag)
-    );
-
-    return result;
+    return GYROJET_CHAT_RECV_OK;
 }
 
 int gyrojet_chat_run(
@@ -294,6 +61,16 @@ int gyrojet_chat_run(
     if (connection == NULL ||
         connection->fd < 0 ||
         key == NULL) {
+        return -1;
+    }
+
+    gyrojet_protocol_t protocol;
+
+    if (gyrojet_protocol_init(
+            &protocol,
+            connection,
+            key
+        ) < 0) {
         return -1;
     }
 
@@ -333,6 +110,9 @@ int gyrojet_chat_run(
                 continue;
 
             perror("GyroJett: select");
+
+            gyrojet_protocol_clear(&protocol);
+
             return -1;
         }
 
@@ -351,8 +131,7 @@ int gyrojet_chat_run(
             size_t message_size = 0;
 
             result = gyrojet_chat_receive_message(
-                connection,
-                key,
+                &protocol,
                 message,
                 GYROJET_CHAT_MAX_MESSAGE_SIZE,
                 &message_size
@@ -368,6 +147,8 @@ int gyrojet_chat_run(
                     sizeof(message)
                 );
 
+                gyrojet_protocol_clear(&protocol);
+
                 return 0;
             }
 
@@ -382,6 +163,8 @@ int gyrojet_chat_run(
                     message,
                     sizeof(message)
                 );
+
+                gyrojet_protocol_clear(&protocol);
 
                 return -1;
             }
@@ -439,6 +222,8 @@ int gyrojet_chat_run(
                     sizeof(message)
                 );
 
+                gyrojet_protocol_clear(&protocol);
+
                 return 0;
             }
 
@@ -462,9 +247,9 @@ int gyrojet_chat_run(
                 continue;
             }
 
-            if (gyrojet_chat_send_message(
-                    connection,
-                    key,
+            if (gyrojet_protocol_send(
+                    &protocol,
+                    GYROJET_FRAME_TEXT,
                     message,
                     message_size
                 ) < 0) {
@@ -478,6 +263,8 @@ int gyrojet_chat_run(
                     message,
                     sizeof(message)
                 );
+
+                gyrojet_protocol_clear(&protocol);
 
                 return -1;
             }

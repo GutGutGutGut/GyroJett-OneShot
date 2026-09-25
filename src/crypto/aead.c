@@ -34,10 +34,12 @@ int gyrojet_aead_encrypt(
 {
     if (key == NULL ||
         nonce == NULL ||
-        ciphertext == NULL ||
         tag == NULL) {
         return -1;
     }
+
+    if (ciphertext == NULL && plaintext_size != 0)
+        return -1;
 
     if (plaintext == NULL && plaintext_size != 0)
         return -1;
@@ -70,6 +72,12 @@ int gyrojet_aead_encrypt(
     int result = -1;
     int written = 0;
     int total = 0;
+
+    unsigned char empty_buffer[1];
+    unsigned char *final_output = ciphertext;
+
+    if (final_output == NULL)
+        final_output = empty_buffer;
 
     if (EVP_EncryptInit_ex(
             ctx,
@@ -128,7 +136,7 @@ int gyrojet_aead_encrypt(
 
     if (EVP_EncryptFinal_ex(
             ctx,
-            ciphertext + total,
+            final_output + total,
             &written
         ) != 1) {
         goto cleanup;
@@ -169,10 +177,12 @@ int gyrojet_aead_decrypt(
 {
     if (key == NULL ||
         nonce == NULL ||
-        tag == NULL ||
-        plaintext == NULL) {
+        tag == NULL) {
         return -1;
     }
+
+    if (plaintext == NULL && ciphertext_size != 0)
+        return -1;
 
     if (ciphertext == NULL && ciphertext_size != 0)
         return -1;
@@ -205,6 +215,12 @@ int gyrojet_aead_decrypt(
     int result = -1;
     int written = 0;
     int total = 0;
+
+    unsigned char empty_buffer[1];
+    unsigned char *final_output = plaintext;
+
+    if (final_output == NULL)
+        final_output = empty_buffer;
 
     if (EVP_DecryptInit_ex(
             ctx,
@@ -272,7 +288,7 @@ int gyrojet_aead_decrypt(
 
     if (EVP_DecryptFinal_ex(
             ctx,
-            plaintext + total,
+            final_output + total,
             &written
         ) != 1) {
         goto cleanup;
