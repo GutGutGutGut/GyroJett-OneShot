@@ -22,10 +22,13 @@ add_executable(GyroJett-OneShot2
     src/tor/tor.c
 
     src/server/server.c
+
     src/network/connection.c
     src/network/socks5.c
 
     src/client/client.c
+
+    src/chat/chat.c
 
     src/session/secret.c
 

@@ -2,132 +2,16 @@
 
 #include "server.h"
 
-#include "../crypto/aead.h"
-#include "../crypto/crypto.h"
+#include "../chat/chat.h"
 #include "../network/connection.h"
 
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netinet/in.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-
-#define GYROJET_FRAME_MAX_SIZE 4096
-
-static int gyrojet_server_send_message(
-    int client_fd,
-    const unsigned char session_key[
-        GYROJET_SERVER_SESSION_KEY_SIZE
-    ],
-    const unsigned char *message,
-    size_t message_size
-)
-{
-    if (client_fd < 0 ||
-        session_key == NULL ||
-        message == NULL) {
-        return -1;
-    }
-
-    if (message_size > GYROJET_FRAME_MAX_SIZE)
-        return -1;
-
-    unsigned char nonce[GYROJET_AEAD_NONCE_SIZE];
-
-    unsigned char ciphertext[
-        GYROJET_FRAME_MAX_SIZE
-    ];
-
-    unsigned char tag[
-        GYROJET_AEAD_TAG_SIZE
-    ];
-
-    if (gyrojet_crypto_random(
-            nonce,
-            sizeof(nonce)
-        ) != 0) {
-        return -1;
-    }
-
-    if (gyrojet_aead_encrypt(
-            session_key,
-            nonce,
-            message,
-            message_size,
-            NULL,
-            0,
-            ciphertext,
-            tag
-        ) != 0) {
-
-        gyrojet_crypto_secure_zero(
-            nonce,
-            sizeof(nonce)
-        );
-
-        return -1;
-    }
-
-    uint32_t length = htonl(
-        (uint32_t)message_size
-    );
-
-    gyrojet_connection_t connection = {
-        .fd = client_fd
-    };
-
-    if (gyrojet_connection_send(
-            &connection,
-            &length,
-            sizeof(length)
-        ) != 0) {
-        return -1;
-    }
-
-    if (gyrojet_connection_send(
-            &connection,
-            nonce,
-            sizeof(nonce)
-        ) != 0) {
-        return -1;
-    }
-
-    if (gyrojet_connection_send(
-            &connection,
-            ciphertext,
-            message_size
-        ) != 0) {
-        return -1;
-    }
-
-    if (gyrojet_connection_send(
-            &connection,
-            tag,
-            sizeof(tag)
-        ) != 0) {
-        return -1;
-    }
-
-    gyrojet_crypto_secure_zero(
-        nonce,
-        sizeof(nonce)
-    );
-
-    gyrojet_crypto_secure_zero(
-        ciphertext,
-        sizeof(ciphertext)
-    );
-
-    gyrojet_crypto_secure_zero(
-        tag,
-        sizeof(tag)
-    );
-
-    return 0;
-}
 
 int gyrojet_server_start(
     gyrojet_server_t *server,
@@ -137,7 +21,13 @@ int gyrojet_server_start(
     if (server == NULL)
         return -1;
 
-    memset(server, 0, sizeof(*server));
+    memset(
+        server,
+        0,
+        sizeof(*server)
+    );
+
+    server->socket_fd = -1;
 
     server->socket_fd = socket(
         AF_INET,
@@ -170,11 +60,17 @@ int gyrojet_server_start(
 
     struct sockaddr_in address;
 
-    memset(&address, 0, sizeof(address));
+    memset(
+        &address,
+        0,
+        sizeof(address)
+    );
 
     address.sin_family = AF_INET;
     address.sin_port = htons(port);
-    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    address.sin_addr.s_addr = htonl(
+        INADDR_LOOPBACK
+    );
 
     if (bind(
             server->socket_fd,
@@ -190,7 +86,11 @@ int gyrojet_server_start(
         return -1;
     }
 
-    if (listen(server->socket_fd, 16) < 0) {
+    if (listen(
+            server->socket_fd,
+            16
+        ) < 0) {
+
         perror("GyroJett: listen");
 
         close(server->socket_fd);
@@ -230,11 +130,15 @@ int gyrojet_server_run(
         return -1;
     }
 
-    printf("Servidor aguardando conexão...\n");
+    printf(
+        "Servidor aguardando conexão...\n"
+    );
 
     for (;;) {
         struct sockaddr_in client;
-        socklen_t client_length = sizeof(client);
+
+        socklen_t client_length =
+            sizeof(client);
 
         int client_fd = accept(
             server->socket_fd,
@@ -266,29 +170,33 @@ int gyrojet_server_run(
             );
         }
 
-        static const unsigned char message[] =
-            "GyroJett-OneShot2 encrypted session online.\n";
+        gyrojet_connection_t connection = {
+            .fd = client_fd
+        };
 
-        if (gyrojet_server_send_message(
-                client_fd,
-                session_key,
-                message,
-                sizeof(message) - 1
-            ) != 0) {
+        printf(
+            "Iniciando sessão de chat...\n"
+        );
 
+        int chat_result = gyrojet_chat_run(
+            &connection,
+            session_key
+        );
+
+        gyrojet_connection_close(
+            &connection
+        );
+
+        if (chat_result < 0) {
             fprintf(
                 stderr,
-                "GyroJett: erro ao enviar mensagem cifrada.\n"
+                "GyroJett: sessão de chat "
+                "encerrada com erro.\n"
             );
-
-            close(client_fd);
-            continue;
+        } else {
+            printf(
+                "Sessão de chat encerrada.\n"
+            );
         }
-
-        printf("Mensagem cifrada enviada.\n");
-
-        close(client_fd);
-
-        printf("Conexão encerrada.\n");
     }
 }
