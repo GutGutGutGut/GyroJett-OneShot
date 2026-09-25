@@ -195,7 +195,6 @@ The project should **not** currently be considered production-ready secure messa
 * [ ] Automated tests
 * [ ] Security review
 * [ ] Stable release
-* [ ] Optional graphical frontend
 
 ## Building
 
@@ -209,11 +208,10 @@ Build dependencies:
 * GNU Binutils
 * CMake >= 3.20
 * Ninja
-
-Runtime dependency:
-
+* libssl-dev
+* libxeddsa-dev
+* libsodium-dev
 * Tor
-
 
 ### Clone
 
@@ -225,14 +223,14 @@ cd GyroJett-OneShot2
 ### Configure
 
 ```bash
-cd Installer/
+cd Instaler/
 ```
 
 ### Build
 
 ```bash
-chmod +x Installer.sh
-./Installer.sh
+chmod +x Instaler.sh
+./Instaler.sh
 ```
 
 The resulting executable will be located at:
