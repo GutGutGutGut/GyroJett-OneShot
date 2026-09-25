@@ -214,11 +214,6 @@ Runtime dependency:
 
 * Tor
 
-On Debian-based systems:
-
-```bash
-sudo apt install build-essential cmake ninja-build tor
-```
 
 ### Clone
 
@@ -230,13 +225,14 @@ cd GyroJett-OneShot2
 ### Configure
 
 ```bash
-cmake -S . -B build -G Ninja
+cd Installer/
 ```
 
 ### Build
 
 ```bash
-cmake --build build
+chmod +x Installer.sh
+./Installer.sh
 ```
 
 The resulting executable will be located at:
@@ -248,7 +244,7 @@ build/GyroJett-OneShot2
 ### Run
 
 ```bash
-./build/GyroJett-OneShot2
+gyrojett-oneshot2
 ```
 
 ## Tor Configuration
