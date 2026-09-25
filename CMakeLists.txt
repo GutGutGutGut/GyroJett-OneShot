@@ -58,6 +58,22 @@ target_compile_options(GyroJett-OneShot2 PRIVATE
     -Wpedantic
     -Wconversion
     -Wshadow
+
+    -fstack-protector-strong
+    -fstack-clash-protection
+
+    -D_FORTIFY_SOURCE=3
+
+    -Wformat
+    -Wformat-security
+
+    -fPIE
+)
+
+target_link_options(GyroJett-OneShot2 PRIVATE
+    -pie
+    -Wl,-z,relro
+    -Wl,-z,now
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
