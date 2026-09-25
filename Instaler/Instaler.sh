@@ -45,6 +45,7 @@ PACKAGES=(
     tor
     libssl-dev
     libxeddsa-dev
+    libsodium-dev
 )
 
 MISSING=()
