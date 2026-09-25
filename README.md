@@ -341,46 +341,55 @@ Privacy guarantees depend on the final implementation and protocol design and sh
 ## Project Structure
 
 ```text
-GyroJett-OneShot2/
-├── CMakeLists.txt
-├── README.md
-├── LICENSE
-├── src/
-│   ├── main.c
-│   │
-│   ├── core/
-│   │   ├── core.c
-│   │   └── core.h
-│   │
-│   ├── cli/
-│   │   ├── cli.c
-│   │   └── cli.h
-│   │
-│   ├── tor/
-│   │   ├── tor.c
-│   │   └── tor.h
-│   │
-│   ├── server/
-│   │   ├── server.c
-│   │   └── server.h
-│   │
-│   ├── network/
-│   │   ├── socks5.c
-│   │   ├── socks5.h
-│   │   ├── connection.c
-│   │   └── connection.h
-│   │
-│   ├── client/
-│   │   ├── client.c
-│   │   └── client.h
-│   │
-│   └── session/
-│       ├── secret.c
-│       └── secret.h
-│
-├── tests/
-└── installer/
-    └── install.sh
+GyroJett-OneShot/
+├── CMakeLists.txt          # Main CMake build script
+├── README.md               # Project documentation and roadmap
+├── LICENSE                 # GNU General Public License v3.0
+├── cross_platform.h        # Platform abstraction layer definitions
+├── Installer/
+│   └── Installer.sh        # Automated build and deployment script for Debian
+└── src/
+    ├── main.c              # Application entry point and module initialization
+    ├── chat/
+    │   ├── chat.h          # Chat loop definitions and buffer boundaries
+    │   └── chat.c          # Terminal and network I/O multiplexing (select)
+    ├── cli/
+    │   ├── cli.h           # Command-line interface function prototypes
+    │   └── cli.c           # CLI parsing, user menus, and terminal interaction
+    ├── client/
+    │   ├── client.h        # SOCKS5 outbound client initialization
+    │   └── client.c        # Outbound TCP connections routed through the Tor network
+    ├── core/
+    │   ├── core.h          # Global lifecycle definitions and structures
+    │   └── core.c          # Central orchestrator connecting networking and crypto
+    ├── crypto/
+    │   ├── aead.h / aead.c             # Authenticated Encryption with Associated Data (AEAD)
+    │   ├── crypto.h / crypto.c         # Entropy pooling and anti-forensic secure memory zeroing
+    │   ├── mlkem.h / mlkem.c           # Module-Lattice-Based Key Encapsulation Mechanism (Post-Quantum KEM)
+    │   ├── x25519.h / x25519.c         # Traditional Curve25519 Elliptic Curve Cryptography
+    │   ├── xeddsa.h / xeddsa.c         # Ed25519/Curve25519 cryptographic signatures
+    │   └── xeddsa_platform.h           # Architecture-specific macros for XEDDSA performance
+    ├── handshake/
+    │   ├── pqxdh.h         # Post-Quantum Extended Diffie-Hellman (Híbrid) protocol definitions
+    │   └── pqxdh.c         # Modular cryptographic handshake and initial key exchange
+    ├── identity/
+    │   ├── identity.h      # User identity key structures and cryptographic profiles
+    │   └── identity.c      # Long-term cryptographic identity generation and persistence
+    ├── network/
+    │   ├── connection.h / connection.c # Low-level TCP socket wrappers and stream buffering
+    │   └── socks5.h / socks5.c         # Native SOCKS5 protocol handshake and state machine
+    ├── protocol/           # Package serialization, framing, and data encapsulation
+    ├── ratchet/            # Double Ratchet algorithm implementation for session forward secrecy
+    ├── server/
+    │   ├── server.h        # Inbound TCP server initialization
+    │   └── server.c        # Inbound connection management from ephemeral Onion Services
+    ├── session/
+    │   ├── secret.h        # Ephemeral session key entropy definitions
+    │   └── session.c       # Secure generation of volatile session secrets in base-61
+    └── tor/
+        ├── tor.h           # Tor daemon management and control primitives
+        └── tor.c           # Tor ControlPort 9051 interaction and dynamic Onion Services (ADD_ONION)
+
 ```
 
 The architecture is intentionally modular so that new protocol, cryptographic and identity components can be added without turning the application into a monolithic codebase.
