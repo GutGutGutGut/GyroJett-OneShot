@@ -24,6 +24,7 @@ add_executable(GyroJett-OneShot2
     src/chat/chat.c
     src/session/secret.c
     src/session/auth.c
+    src/session/invite.c
     src/crypto/crypto.c
     src/crypto/x25519.c
     src/crypto/mlkem.c

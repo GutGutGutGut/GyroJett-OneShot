@@ -6,6 +6,7 @@
 #include "../server/server.h"
 #include "../tor/tor.h"
 #include "../session/secret.h"
+#include "../session/invite.h"
 #include "../crypto/crypto.h"
 
 #include <stdio.h>
@@ -53,13 +54,35 @@ int gyrojet_cli_run(void)
                 gyrojet_server_t server;
                 gyrojet_tor_t tor;
 
-                char secret[GYROJET_SECRET_BUFFER_SIZE];
+                char secret[
+                    GYROJET_SECRET_BUFFER_SIZE
+                ];
+
+                char invite[
+                    GYROJET_INVITE_MAX_SIZE
+                ];
 
                 unsigned char session_key[
                     GYROJET_SESSION_KEY_SIZE
                 ];
 
-                memset(session_key, 0, sizeof(session_key));
+                memset(
+                    secret,
+                    0,
+                    sizeof(secret)
+                );
+
+                memset(
+                    invite,
+                    0,
+                    sizeof(invite)
+                );
+
+                memset(
+                    session_key,
+                    0,
+                    sizeof(session_key)
+                );
 
                 printf("\n");
                 printf("Criar uma sessão\n");
@@ -68,10 +91,15 @@ int gyrojet_cli_run(void)
 
                 printf("Iniciando servidor...\n");
 
-                if (gyrojet_server_start(&server, port) < 0) {
+                if (gyrojet_server_start(
+                        &server,
+                        port
+                    ) < 0) {
+
                     fprintf(
                         stderr,
-                        "GyroJett: não foi possível iniciar o servidor.\n"
+                        "GyroJett: não foi possível "
+                        "iniciar o servidor.\n"
                     );
 
                     break;
@@ -79,18 +107,27 @@ int gyrojet_cli_run(void)
 
                 printf("Conectando ao Tor...\n");
 
-                if (gyrojet_tor_start(&tor, port) < 0) {
+                if (gyrojet_tor_start(
+                        &tor,
+                        port
+                    ) < 0) {
+
                     fprintf(
                         stderr,
-                        "GyroJett: não foi possível criar o Onion Service.\n"
+                        "GyroJett: não foi possível "
+                        "criar o Onion Service.\n"
                     );
 
-                    gyrojet_server_stop(&server);
+                    gyrojet_server_stop(
+                        &server
+                    );
 
                     break;
                 }
 
-                printf("Gerando segredo da sessão...\n");
+                printf(
+                    "Gerando segredo da sessão...\n"
+                );
 
                 if (gyrojet_secret_generate(
                         secret,
@@ -99,7 +136,8 @@ int gyrojet_cli_run(void)
 
                     fprintf(
                         stderr,
-                        "GyroJett: não foi possível gerar o segredo.\n"
+                        "GyroJett: não foi possível "
+                        "gerar o segredo.\n"
                     );
 
                     gyrojet_tor_stop(&tor);
@@ -108,7 +146,9 @@ int gyrojet_cli_run(void)
                     break;
                 }
 
-                printf("Derivando chave da sessão...\n");
+                printf(
+                    "Derivando chave da sessão...\n"
+                );
 
                 if (gyrojet_secret_derive_key(
                         secret,
@@ -117,8 +157,8 @@ int gyrojet_cli_run(void)
 
                     fprintf(
                         stderr,
-                        "GyroJett: não foi possível derivar "
-                        "a chave da sessão.\n"
+                        "GyroJett: não foi possível "
+                        "derivar a chave da sessão.\n"
                     );
 
                     gyrojet_crypto_secure_zero(
@@ -137,36 +177,99 @@ int gyrojet_cli_run(void)
                     break;
                 }
 
+                /*
+                 * O convite reúne o endereço Tor
+                 * e o segredo da sessão em uma única
+                 * string copiável.
+                 */
+                if (gyrojet_invite_create(
+                        tor.onion_address,
+                        secret,
+                        invite,
+                        sizeof(invite)
+                    ) < 0) {
+
+                    fprintf(
+                        stderr,
+                        "GyroJett: não foi possível "
+                        "criar o convite.\n"
+                    );
+
+                    gyrojet_crypto_secure_zero(
+                        secret,
+                        sizeof(secret)
+                    );
+
+                    gyrojet_crypto_secure_zero(
+                        invite,
+                        sizeof(invite)
+                    );
+
+                    gyrojet_crypto_secure_zero(
+                        session_key,
+                        sizeof(session_key)
+                    );
+
+                    gyrojet_tor_stop(&tor);
+                    gyrojet_server_stop(&server);
+
+                    break;
+                }
+
                 printf("\n");
-                printf("##########################################\n");
-                printf("#           SESSÃO CRIADA                #\n");
-                printf("##########################################\n");
-                printf("------------------------------------------\n");
+                printf(
+                    "##########################################\n"
+                );
+                printf(
+                    "#           SESSÃO CRIADA                #\n"
+                );
+                printf(
+                    "##########################################\n"
+                );
+                printf(
+                    "------------------------------------------\n"
+                );
 
-                printf("Endereço .onion:\n");
-                printf("%s\n", tor.onion_address);
+                printf("Convite da sessão:\n");
+                printf("%s\n", invite);
 
-                printf("                                          \n");
-
-                printf("Segredo da sessão:\n");
-                printf("%s\n", secret);
-
-                printf("                                          \n");
-                printf("[########################################]\n");
                 printf("\n");
 
+                if (gyrojet_invite_copy_clipboard(
+                        invite
+                    ) == 0) {
+
+                    printf(
+                        "✓ Convite copiado para o clipboard.\n"
+                    );
+
+                } else {
+
+                    printf(
+                        "Copie o convite acima manualmente.\n"
+                    );
+                }
+
+                printf("\n");
                 printf("Aguardando conexão...\n");
-                printf("Pressione Ctrl+C para sair.\n");
+                printf(
+                    "Pressione Ctrl+C para sair.\n"
+                );
                 printf("\n");
 
                 /*
-                 * Depois que a chave foi derivada,
-                 * o segredo textual não precisa mais ficar
-                 * armazenado em memória.
+                 * O segredo textual e o convite não
+                 * precisam permanecer na memória enquanto
+                 * a sessão está aguardando conexão.
                  */
                 gyrojet_crypto_secure_zero(
                     secret,
                     sizeof(secret)
+                );
+
+                gyrojet_crypto_secure_zero(
+                    invite,
+                    sizeof(invite)
                 );
 
                 int result = gyrojet_server_run(
@@ -185,7 +288,8 @@ int gyrojet_cli_run(void)
                 if (result < 0) {
                     fprintf(
                         stderr,
-                        "GyroJett: servidor encerrado com erro.\n"
+                        "GyroJett: servidor encerrado "
+                        "com erro.\n"
                     );
                 }
 
@@ -193,51 +297,116 @@ int gyrojet_cli_run(void)
             }
 
             case 2: {
-                char onion[256];
+                const unsigned short port = 4242;
+                char invite[
+                    GYROJET_INVITE_MAX_SIZE
+                ];
 
-                char secret[GYROJET_SECRET_BUFFER_SIZE];
+                char onion[
+                    GYROJET_TOR_ONION_ADDRESS_SIZE
+                ];
+
+                char secret[
+                    GYROJET_SECRET_BUFFER_SIZE
+                ];
 
                 unsigned char session_key[
                     GYROJET_SESSION_KEY_SIZE
                 ];
 
-                memset(session_key, 0, sizeof(session_key));
+                memset(
+                    invite,
+                    0,
+                    sizeof(invite)
+                );
+
+                memset(
+                    onion,
+                    0,
+                    sizeof(onion)
+                );
+
+                memset(
+                    secret,
+                    0,
+                    sizeof(secret)
+                );
+
+                memset(
+                    session_key,
+                    0,
+                    sizeof(session_key)
+                );
 
                 printf("\n");
                 printf("Conectar a uma sessão\n");
                 printf("---------------------\n");
                 printf("\n");
 
-                printf("Endereço .onion: ");
+                printf(
+                    "Cole o convite da sessão:\n> "
+                );
+
                 fflush(stdout);
 
                 if (fgets(
+                        invite,
+                        sizeof(invite),
+                        stdin
+                    ) == NULL) {
+
+                    printf(
+                        "\nErro ao ler o convite.\n"
+                    );
+
+                    gyrojet_crypto_secure_zero(
+                        invite,
+                        sizeof(invite)
+                    );
+
+                    break;
+                }
+
+                invite[strcspn(
+                    invite,
+                    "\n"
+                )] = '\0';
+
+                if (invite[0] == '\0') {
+
+                    printf(
+                        "Convite inválido.\n"
+                    );
+
+                    gyrojet_crypto_secure_zero(
+                        invite,
+                        sizeof(invite)
+                    );
+
+                    break;
+                }
+
+                if (gyrojet_invite_parse(
+                        invite,
                         onion,
                         sizeof(onion),
-                        stdin
-                    ) == NULL) {
-
-                    printf("\nErro ao ler o endereço.\n");
-                    break;
-                }
-
-                onion[strcspn(onion, "\n")] = '\0';
-
-                if (onion[0] == '\0') {
-                    printf("Endereço inválido.\n");
-                    break;
-                }
-
-                printf("Segredo da sessão: ");
-                fflush(stdout);
-
-                if (fgets(
                         secret,
-                        sizeof(secret),
-                        stdin
-                    ) == NULL) {
+                        sizeof(secret)
+                    ) < 0) {
 
-                    printf("\nErro ao ler o segredo.\n");
+                    printf(
+                        "Convite inválido ou corrompido.\n"
+                    );
+
+                    gyrojet_crypto_secure_zero(
+                        invite,
+                        sizeof(invite)
+                    );
+
+                    gyrojet_crypto_secure_zero(
+                        onion,
+                        sizeof(onion)
+                    );
 
                     gyrojet_crypto_secure_zero(
                         secret,
@@ -247,20 +416,9 @@ int gyrojet_cli_run(void)
                     break;
                 }
 
-                secret[strcspn(secret, "\n")] = '\0';
-
-                if (secret[0] == '\0') {
-                    printf("Segredo inválido.\n");
-
-                    gyrojet_crypto_secure_zero(
-                        secret,
-                        sizeof(secret)
-                    );
-
-                    break;
-                }
-
-                printf("Derivando chave da sessão...\n");
+                printf(
+                    "Derivando chave da sessão...\n"
+                );
 
                 if (gyrojet_secret_derive_key(
                         secret,
@@ -269,8 +427,18 @@ int gyrojet_cli_run(void)
 
                     fprintf(
                         stderr,
-                        "GyroJett: não foi possível derivar "
-                        "a chave da sessão.\n"
+                        "GyroJett: não foi possível "
+                        "derivar a chave da sessão.\n"
+                    );
+
+                    gyrojet_crypto_secure_zero(
+                        invite,
+                        sizeof(invite)
+                    );
+
+                    gyrojet_crypto_secure_zero(
+                        onion,
+                        sizeof(onion)
                     );
 
                     gyrojet_crypto_secure_zero(
@@ -287,13 +455,18 @@ int gyrojet_cli_run(void)
                 }
 
                 gyrojet_crypto_secure_zero(
+                    invite,
+                    sizeof(invite)
+                );
+
+                gyrojet_crypto_secure_zero(
                     secret,
                     sizeof(secret)
                 );
 
                 if (gyrojet_client_connect(
                         onion,
-                        4242,
+                        port,
                         session_key
                     ) < 0) {
 
@@ -301,6 +474,11 @@ int gyrojet_cli_run(void)
                         "Não foi possível conectar.\n"
                     );
                 }
+
+                gyrojet_crypto_secure_zero(
+                    onion,
+                    sizeof(onion)
+                );
 
                 gyrojet_crypto_secure_zero(
                     session_key,
