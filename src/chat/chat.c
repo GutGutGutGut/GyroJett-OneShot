@@ -76,11 +76,11 @@ const char *local_prefix;
 const char *remote_prefix;
 
 if (role == GYROJET_CHAT_SERVER) {
-    local_prefix = "Server> ";
-    remote_prefix = "Client> ";
+    local_prefix = "You> ";
+    remote_prefix = "Unknow> ";
 } else {
-    local_prefix = "Client> ";
-    remote_prefix = "Server> ";
+    local_prefix = "You> ";
+    remote_prefix = "Unknow> ";
 }
 
 gyrojet_protocol_t protocol;
