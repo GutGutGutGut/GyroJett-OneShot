@@ -235,21 +235,6 @@ int gyrojet_cli_run(void)
 
                 printf("\n");
 
-                if (gyrojet_invite_copy_clipboard(
-                        invite
-                    ) == 0) {
-
-                    printf(
-                        "✓ Convite copiado para o clipboard.\n"
-                    );
-
-                } else {
-
-                    printf(
-                        "Copie o convite acima manualmente.\n"
-                    );
-                }
-
                 printf("\n");
                 printf("Aguardando conexão...\n");
                 printf(
