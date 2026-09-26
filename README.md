@@ -185,10 +185,10 @@ The project should **not** currently be considered production-ready secure messa
 * [x] Dynamic Onion Service creation
 * [x] Session secret generation
 * [ ] Session authentication
-* [ ] Messaging protocol
+* [x] Messaging protocol
 * [ ] Secure handshake
-* [ ] Key establishment
-* [ ] End-to-end encryption
+* [x] Key establishment
+* [x] End-to-end encryption
 * [ ] Ratcheting
 * [ ] Secure file transfer
 * [ ] Connection management

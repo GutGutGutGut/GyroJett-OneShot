@@ -180,8 +180,9 @@ int gyrojet_server_run(
 
         int chat_result = gyrojet_chat_run(
             &connection,
-            session_key
-        );
+            session_key,
+            GYROJET_CHAT_SERVER
+            );
 
         gyrojet_connection_close(
             &connection

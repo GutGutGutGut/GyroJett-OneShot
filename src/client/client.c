@@ -52,7 +52,8 @@ int gyrojet_client_connect(
 
     int result = gyrojet_chat_run(
         &connection,
-        session_key
+        session_key,
+        GYROJET_CHAT_CLIENT
     );
 
     gyrojet_connection_close(

@@ -14,32 +14,22 @@ find_package(OpenSSL 3.5 REQUIRED COMPONENTS Crypto)
 
 add_executable(GyroJett-OneShot2
     src/main.c
-
     src/core/core.c
-
     src/cli/cli.c
-
     src/tor/tor.c
-
     src/server/server.c
-
     src/network/connection.c
     src/network/socks5.c
-
     src/client/client.c
-
     src/chat/chat.c
-
     src/session/secret.c
-
+    src/session/auth.c
     src/crypto/crypto.c
     src/crypto/x25519.c
     src/crypto/mlkem.c
     src/crypto/xeddsa.c
     src/crypto/aead.c
-
     src/identity/identity.c
-
     src/handshake/pqxdh.c
     src/protocol/frame.c
     src/protocol/protocol.c
