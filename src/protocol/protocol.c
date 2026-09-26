@@ -12,8 +12,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#define PROTO_DEBUG(fmt, ...) \
-    fprintf(stderr, "[PROTO DEBUG] " fmt "\n", ##__VA_ARGS__)
+#define PROTO_DEBUG(...) \
+    do { \
+        fprintf(stderr, "[PROTO DEBUG] "); \
+        fprintf(stderr, __VA_ARGS__); \
+        fprintf(stderr, "\n"); \
+    } while (0)
 
 static void gyrojet_protocol_debug_hex(
     const char *label,
@@ -25,7 +29,12 @@ static void gyrojet_protocol_debug_hex(
         return;
     }
 
-    fprintf(stderr, "[PROTO DEBUG] %s (%zu bytes): ", label, size);
+    fprintf(
+        stderr,
+        "[PROTO DEBUG] %s (%zu bytes): ",
+        label,
+        size
+    );
 
     if (buffer == NULL && size != 0) {
         fprintf(stderr, "<NULL>\n");
@@ -70,52 +79,32 @@ static int gyrojet_protocol_send_all(
         return -1;
     }
 
-    const unsigned char *ptr = buffer;
-    size_t sent = 0;
-
     PROTO_DEBUG(
         "send_all: iniciando envio de %zu bytes pelo fd=%d",
         size,
         connection->fd
     );
 
-    while (sent < size) {
-        ssize_t result = gyrojet_connection_send(
+    if (gyrojet_connection_send(
             connection,
-            ptr + sent,
-            size - sent
-        );
-
-        if (result < 0) {
-            PROTO_DEBUG(
-                "send_all: connection_send retornou %zd "
-                "errno=%d (%s)",
-                result,
-                errno,
-                strerror(errno)
-            );
-
-            return -1;
-        }
-
-        if (result == 0) {
-            PROTO_DEBUG(
-                "send_all: connection_send retornou 0"
-            );
-
-            return -1;
-        }
-
-        sent += (size_t)result;
+            buffer,
+            size
+        ) < 0) {
 
         PROTO_DEBUG(
-            "send_all: enviado=%zu/%zu",
-            sent,
-            size
+            "send_all: connection_send falhou "
+            "errno=%d (%s)",
+            errno,
+            strerror(errno)
         );
+
+        return -1;
     }
 
-    PROTO_DEBUG("send_all: envio concluído");
+    PROTO_DEBUG(
+        "send_all: envio concluído (%zu bytes)",
+        size
+    );
 
     return 0;
 }
